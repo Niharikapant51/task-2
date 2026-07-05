@@ -1,0 +1,137 @@
+import sqlite3
+from datetime import datetime
+
+# Connect to database
+conn = sqlite3.connect("expenses.db")
+cursor = conn.cursor()
+
+# Create table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS expenses(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    amount REAL,
+    category TEXT,
+    date TEXT
+)
+""")
+conn.commit()
+
+
+def add_expense():
+    title = input("Expense Title: ")
+    amount = float(input("Amount: ₹"))
+    category = input("Category: ")
+    date = input("Date (YYYY-MM-DD): ")
+
+    cursor.execute(
+        "INSERT INTO expenses(title, amount, category, date) VALUES(?,?,?,?)",
+        (title, amount, category, date)
+    )
+    conn.commit()
+    print("\nExpense Added Successfully!\n")
+
+
+def view_expenses():
+    cursor.execute("SELECT * FROM expenses")
+    rows = cursor.fetchall()
+
+    print("\n========== Expenses ==========")
+
+    total = 0
+
+    for row in rows:
+        print(f"ID:{row[0]}")
+        print(f"Title: {row[1]}")
+        print(f"Amount: ₹{row[2]}")
+        print(f"Category: {row[3]}")
+        print(f"Date: {row[4]}")
+        print("-------------------------")
+        total += row[2]
+
+    print(f"Total Expense = ₹{total}\n")
+
+
+def delete_expense():
+    expense_id = int(input("Enter Expense ID: "))
+
+    cursor.execute("DELETE FROM expenses WHERE id=?", (expense_id,))
+    conn.commit()
+
+    print("Expense Deleted Successfully.\n")
+
+
+def update_expense():
+    expense_id = int(input("Expense ID: "))
+
+    title = input("New Title: ")
+    amount = float(input("New Amount: "))
+    category = input("New Category: ")
+    date = input("New Date: ")
+
+    cursor.execute("""
+    UPDATE expenses
+    SET title=?, amount=?, category=?, date=?
+    WHERE id=?
+    """, (title, amount, category, date, expense_id))
+
+    conn.commit()
+
+    print("Expense Updated Successfully.\n")
+
+
+def monthly_report():
+    month = input("Enter Month (MM): ")
+
+    cursor.execute(
+        "SELECT title, amount, category, date FROM expenses WHERE strftime('%m', date)=?",
+        (month,)
+    )
+
+    rows = cursor.fetchall()
+
+    total = 0
+
+    print("\nMonthly Report\n")
+
+    for row in rows:
+        print(row)
+        total += row[1]
+
+    print(f"\nTotal Expense = ₹{total}\n")
+
+
+while True:
+
+    print("====== Expense Tracker ======")
+    print("1. Add Expense")
+    print("2. View Expenses")
+    print("3. Update Expense")
+    print("4. Delete Expense")
+    print("5. Monthly Report")
+    print("6. Exit")
+
+    choice = input("Enter Choice: ")
+
+    if choice == "1":
+        add_expense()
+
+    elif choice == "2":
+        view_expenses()
+
+    elif choice == "3":
+        update_expense()
+
+    elif choice == "4":
+        delete_expense()
+
+    elif choice == "5":
+        monthly_report()
+
+    elif choice == "6":
+        conn.close()
+        print("Thank You!")
+        break
+
+    else:
+        print("Invalid Choice\n")
